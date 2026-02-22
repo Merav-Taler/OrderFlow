@@ -1629,17 +1629,21 @@ function showProductModal(editId){
     <div class="modal-header"><div class="modal-title">${prod?'עריכת':'מוצר חדש'} מוצר</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
     <div class="form-group"><label class="form-label form-required">שם המוצר</label><input class="form-input" id="prod-name" value="${esc(prod?.name||'')}"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label form-required">קטגוריה</label>
-        <select class="form-input" id="prod-cat">${cats.length?cats.map(c=>`<option value="${c.id}" ${prod?.categoryId===c.id?'selected':''}>${esc(c.icon||'')} ${esc(c.name)}</option>`).join(''):'<option value="">אין קטגוריות</option>'}</select>
+      <div class="form-group"><label class="form-label">קטגוריה</label>
+        <select class="form-input" id="prod-cat"><option value="">ללא קטגוריה</option>${cats.map(c=>`<option value="${c.id}" ${prod?.categoryId===c.id?'selected':''}>${esc(c.icon||'')} ${esc(c.name)}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label class="form-label">יחידת מידה</label>
-        <select class="form-input" id="prod-unit">
-          <option value="units" ${prod?.unit==='units'?'selected':''}>יחידות</option>
+        <select class="form-input" id="prod-unit" onchange="document.getElementById('prod-custom-unit-wrap').style.display=this.value==='custom'?'block':'none'">
+          <option value="units" ${prod?.unit==='units'||!prod?.unit?'selected':''}>יחידות</option>
           <option value="kg" ${prod?.unit==='kg'?'selected':''}>ק"ג</option>
           <option value="boxes" ${prod?.unit==='boxes'?'selected':''}>קרטונים</option>
           <option value="trays" ${prod?.unit==='trays'?'selected':''}>מגשים</option>
           <option value="packs" ${prod?.unit==='packs'?'selected':''}>חבילות</option>
+          <option value="custom" ${prod?.unit==='custom'?'selected':''}>אחר (הגדרה ידנית)</option>
         </select>
+        <div id="prod-custom-unit-wrap" style="display:${prod?.unit==='custom'?'block':'none'};margin-top:8px">
+          <input class="form-input" id="prod-custom-unit" placeholder="לדוגמה: חבילה, שקית, בועה" value="${esc(prod?.unit==='custom'?prod?.unitLabel||'':'')}">
+        </div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">תיאור קצר</label><input class="form-input" id="prod-desc" value="${esc(prod?.description||'')}" placeholder="לדוגמה: 6 ק&quot;ג, 30 יחידות"></div>
@@ -1665,9 +1669,10 @@ async function saveProduct(editId){
   if(!requireRole('editor'))return;
   const name=document.getElementById('prod-name').value.trim();
   if(!name){toast('נא להזין שם מוצר','error');return}
-  const categoryId=document.getElementById('prod-cat').value;
-  if(!categoryId){toast('נא לבחור קטגוריה','error');return}
+  const categoryId=document.getElementById('prod-cat').value||'';
   const unit=document.getElementById('prod-unit').value;
+  const customUnitLabel=(document.getElementById('prod-custom-unit')?.value||'').trim();
+  const unitLabel=unit==='custom'?(customUnitLabel||'יחידות'):UNIT_LABELS[unit]||unit;
   const description=document.getElementById('prod-desc').value.trim();
   const imagesEl=document.getElementById('prod-img-urls');
   const images=JSON.parse(imagesEl.dataset.urls||'[]');
@@ -1677,7 +1682,7 @@ async function saveProduct(editId){
   const order=editId?(currentBizData.products[editId].order||0):prods.length;
 
   const prodData={
-    name,categoryId,unit,unitLabel:UNIT_LABELS[unit]||unit,
+    name,categoryId,unit,unitLabel,
     description,images,order,
     enabled:editId?currentBizData.products[editId].enabled!==false:true,
     createdAt:editId?currentBizData.products[editId].createdAt:Date.now(),
@@ -2152,11 +2157,11 @@ function renderCustomerView(){
     .filter(c=>c.enabled!==false)
     .sort((a,b)=>(a.order||0)-(b.order||0));
 
-  // Build sorted products (enabled only, in enabled categories)
+  // Build sorted products (enabled only, in enabled categories or no category)
   const enabledCatIds=new Set(customerCategories.map(c=>c.id));
   customerProducts=Object.entries(currentBizData.products)
     .map(([id,p])=>({id,...p}))
-    .filter(p=>p.enabled!==false&&enabledCatIds.has(p.categoryId))
+    .filter(p=>p.enabled!==false&&(!p.categoryId||enabledCatIds.has(p.categoryId)))
     .sort((a,b)=>(a.order||0)-(b.order||0));
 
   // Render category tabs
@@ -2207,9 +2212,9 @@ function renderCustomerProducts(){
         <div class="product-name">${esc(p.name)}</div>
         ${p.description?`<div class="product-desc">${esc(p.description)}</div>`:''}
         <div class="quantity-control" role="group" aria-label="כמות ${esc(p.name)}">
-          <button class="qty-btn minus" onclick="changeQty('${p.id}',-1)" aria-label="הפחת כמות">−</button>
-          <input class="qty-input" type="number" min="0" value="${qty}" onchange="setQty('${p.id}',this.value)" id="qty-${p.id}" aria-label="כמות">
-          <button class="qty-btn" onclick="changeQty('${p.id}',1)" aria-label="הוסף כמות">+</button>
+          <button class="qty-btn minus" onclick="changeQty('${p.id}',${p.unit==='kg'?-0.5:-1})" aria-label="הפחת כמות">−</button>
+          <input class="qty-input" type="number" min="0" step="${p.unit==='kg'?'0.5':'1'}" value="${qty}" onchange="setQty('${p.id}',this.value)" id="qty-${p.id}" aria-label="כמות">
+          <button class="qty-btn" onclick="changeQty('${p.id}',${p.unit==='kg'?0.5:1})" aria-label="הוסף כמות">+</button>
         </div>
         <div class="product-unit">${esc(p.unitLabel||'יחידות')}</div>
       </div>
@@ -2219,8 +2224,8 @@ function renderCustomerProducts(){
 
 function changeQty(prodId,delta){
   const current=cart[prodId]||0;
-  const newQty=Math.max(0,current+delta);
-  if(newQty===0)delete cart[prodId];
+  const newQty=Math.max(0,Math.round((current+delta)*100)/100);
+  if(newQty<=0)delete cart[prodId];
   else cart[prodId]=newQty;
 
   const input=document.getElementById('qty-'+prodId);
@@ -2234,8 +2239,8 @@ function changeQty(prodId,delta){
 }
 
 function setQty(prodId,val){
-  const qty=Math.max(0,parseInt(val)||0);
-  if(qty===0)delete cart[prodId];
+  const qty=Math.max(0,parseFloat(val)||0);
+  if(qty<=0)delete cart[prodId];
   else cart[prodId]=qty;
 
   const card=document.getElementById('pcard-'+prodId);
@@ -2318,9 +2323,9 @@ function renderSummary(){
         </div>
         <div class="summary-item-qty">
           <div class="quantity-control" style="border:1px solid var(--border)">
-            <button class="qty-btn minus" style="width:30px;height:30px;font-size:16px" onclick="summaryChangeQty('${it.id}',-1)">−</button>
-            <input class="qty-input" style="width:40px;height:30px;font-size:14px" type="number" min="0" value="${it.qty}" onchange="summarySetQty('${it.id}',this.value)">
-            <button class="qty-btn" style="width:30px;height:30px;font-size:16px" onclick="summaryChangeQty('${it.id}',1)">+</button>
+            <button class="qty-btn minus" style="width:30px;height:30px;font-size:16px" onclick="summaryChangeQty('${it.id}',${it.unit==='kg'?-0.5:-1})">−</button>
+            <input class="qty-input" style="width:48px;height:30px;font-size:14px" type="number" min="0" step="${it.unit==='kg'?'0.5':'1'}" value="${it.qty}" onchange="summarySetQty('${it.id}',this.value)">
+            <button class="qty-btn" style="width:30px;height:30px;font-size:16px" onclick="summaryChangeQty('${it.id}',${it.unit==='kg'?0.5:1})">+</button>
           </div>
         </div>
         <span class="summary-item-delete" onclick="summaryRemoveItem('${it.id}')">&times;</span>
@@ -2330,7 +2335,8 @@ function renderSummary(){
 
   // Total
   const totalItems=Object.values(cart).reduce((a,b)=>a+b,0);
-  html+=`<div class="summary-total">סה"כ ${Object.keys(cart).length} מוצרים, ${totalItems} יחידות</div>`;
+  const totalDisplay=Number.isInteger(totalItems)?totalItems:totalItems.toFixed(1);
+  html+=`<div class="summary-total">סה"כ ${Object.keys(cart).length} מוצרים</div>`;
 
   // Customer form
   const savedCustomer=JSON.parse(localStorage.getItem('orderFlow_customer_'+currentBizId)||'{}');
@@ -2348,8 +2354,8 @@ function renderSummary(){
 
 function summaryChangeQty(prodId,delta){
   const current=cart[prodId]||0;
-  const newQty=Math.max(0,current+delta);
-  if(newQty===0){summaryRemoveItem(prodId);return}
+  const newQty=Math.max(0,Math.round((current+delta)*100)/100);
+  if(newQty<=0){summaryRemoveItem(prodId);return}
   cart[prodId]=newQty;
   saveDraft();
   renderSummary();
@@ -2357,8 +2363,8 @@ function summaryChangeQty(prodId,delta){
 }
 
 function summarySetQty(prodId,val){
-  const qty=Math.max(0,parseInt(val)||0);
-  if(qty===0){summaryRemoveItem(prodId);return}
+  const qty=Math.max(0,parseFloat(val)||0);
+  if(qty<=0){summaryRemoveItem(prodId);return}
   cart[prodId]=qty;
   saveDraft();
   renderSummary();
