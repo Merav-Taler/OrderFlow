@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>OrderFlow - מערכת הזמנות</title>
+<meta name="description" content="OrderFlow - מערכת הזמנות חכמה למפעלים ומאפיות. ניהול מוצרים, קטלוג ללקוחות ושליחת הזמנות בוואטסאפ">
+<meta name="theme-color" content="#FF6B35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<!-- Open Graph / Social Sharing -->
+<meta property="og:type" content="website">
+<meta property="og:title" id="og-title" content="OrderFlow - מערכת הזמנות">
+<meta property="og:description" id="og-desc" content="מערכת הזמנות חכמה למפעלים ומאפיות - ניהול מוצרים, קטלוג ושליחת הזמנות בוואטסאפ">
+<meta property="og:url" id="og-url" content="https://merav-taler.github.io/OrderFlow/">
+<meta property="og:image" id="og-image" content="">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="OrderFlow">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" id="tw-title" content="OrderFlow - מערכת הזמנות">
+<meta name="twitter:description" id="tw-desc" content="מערכת הזמנות חכמה למפעלים ומאפיות">
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%23FF6B35'/><stop offset='100%25' style='stop-color:%23FF8F60'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text x='50' y='68' font-size='55' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>OF</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF6B35'/><text x='50' y='68' font-size='55' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>OF</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" crossorigin="anonymous"></script>
@@ -445,6 +464,38 @@ textarea.form-input{resize:vertical;min-height:80px}
   .product-name{font-size:15px}
 }
 
+/* ===== SUPER ADMIN: BUSINESS LIST ===== */
+.biz-list-container{max-width:960px;margin:0 auto;padding:40px 20px}
+.biz-list-header{text-align:center;margin-bottom:36px}
+.biz-list-logo{font-size:48px;margin-bottom:8px}
+.biz-list-title{font-size:28px;font-weight:900;color:var(--text)}
+.biz-list-subtitle{font-size:15px;color:var(--text-light);margin-top:4px}
+.biz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.biz-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);transition:all var(--transition);border:2px solid transparent;cursor:default}
+.biz-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.biz-card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.biz-card-logo{font-size:36px;width:52px;height:52px;border-radius:12px;background:var(--primary-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.biz-card-logo img{width:52px;height:52px;border-radius:12px;object-fit:cover}
+.biz-card-name{font-size:18px;font-weight:700;color:var(--text)}
+.biz-card-id{font-size:11px;color:var(--text-lighter);font-family:monospace;direction:ltr;text-align:left}
+.biz-card-stats{display:flex;gap:16px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:var(--radius);font-size:13px;color:var(--text-light)}
+.biz-card-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.biz-card-stat strong{font-size:18px;color:var(--text);font-weight:700}
+.biz-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.biz-card-actions .btn{flex:1;min-width:0;font-size:13px;padding:8px 12px}
+.biz-card-new{background:var(--bg-card);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:all var(--transition);min-height:200px}
+.biz-card-new:hover{border-color:var(--primary);background:var(--primary-glow)}
+.biz-card-new-icon{font-size:40px;width:64px;height:64px;border-radius:50%;background:var(--primary-glow);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:300}
+.biz-card-new-text{font-size:16px;font-weight:600;color:var(--text)}
+.nav-item-back{border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:8px;color:rgba(255,255,255,0.7)!important}
+.biz-list-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.biz-list-topbar .btn{font-size:13px}
+@media(max-width:600px){
+  .biz-grid{grid-template-columns:1fr}
+  .biz-list-container{padding:20px 12px}
+  .biz-list-title{font-size:22px}
+}
+
 /* ===== PRINT ===== */
 @media print{
   .sidebar,.mobile-menu-btn,.cart-bar,.summary-submit,.btn{display:none!important}
@@ -489,6 +540,9 @@ textarea.form-input{resize:vertical;min-height:80px}
       <div class="sidebar-subtitle">מערכת הזמנות</div>
     </div>
     <div class="sidebar-nav">
+      <button class="nav-item nav-item-back hidden" id="nav-back-to-biz" onclick="backToBusinessList()">
+        <span class="nav-icon">→</span> חזרה לרשימת עסקים
+      </button>
       <button class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
         <span class="nav-icon">📊</span> דשבורד
       </button>
@@ -711,6 +765,23 @@ textarea.form-input{resize:vertical;min-height:80px}
         </div>
       </div>
     </section>
+
+    <!-- SUPER ADMIN: BUSINESS LIST -->
+    <section class="admin-section" id="sec-businesses">
+      <div class="biz-list-container">
+        <div class="biz-list-header">
+          <div class="biz-list-logo">📦</div>
+          <div class="biz-list-title">OrderFlow Platform</div>
+          <div class="biz-list-subtitle">ניהול עסקים ולקוחות</div>
+        </div>
+        <div class="biz-list-topbar">
+          <div id="biz-count" style="font-size:14px;color:var(--text-light)"></div>
+          <button class="btn btn-primary" onclick="showCreateBusinessModal()">+ עסק חדש</button>
+        </div>
+        <div class="biz-grid" id="biz-grid"></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -766,6 +837,8 @@ let currentUser = null;
 let currentBizId = null;
 let currentBizData = { config: {}, categories: {}, products: {}, orders: {}, members: {} };
 let userRole = null; // 'admin' | 'editor' | 'viewer'
+let isSuperAdmin = false;
+let userBusinessesList = []; // [{bizId, config, stats}]
 let cart = {}; // { productId: quantity }
 let customerProducts = []; // flattened for customer view
 let customerCategories = []; // sorted for customer view
@@ -918,6 +991,8 @@ function logout(){
   currentUser=null;
   currentBizId=null;
   userRole=null;
+  isSuperAdmin=false;
+  userBusinessesList=[];
   showScreen('login');
 }
 
@@ -950,10 +1025,213 @@ function toggleSidebar(){
   if(backdrop){backdrop.style.display=isOpen?'block':'none'}
 }
 
+// ===== PLATFORM ADMIN =====
+async function checkPlatformAdmin(){
+  if(!currentUser||!db)return false;
+  try{
+    const snap=await db.ref('platformAdmins/'+currentUser.uid).once('value');
+    return snap.val()===true;
+  }catch(e){return false}
+}
+
+async function loadSuperAdminBusinesses(){
+  showLoading('טוען עסקים...');
+  try{
+    const snap=await db.ref('businesses').once('value');
+    const all=snap.val()||{};
+    userBusinessesList=Object.entries(all).map(([bizId,data])=>({
+      bizId,
+      config:data.config||{},
+      productCount:data.products?Object.keys(data.products).length:0,
+      categoryCount:data.categories?Object.keys(data.categories).length:0,
+      orderCount:data.orders?Object.keys(data.orders).length:0,
+      memberCount:data.members?Object.keys(data.members).length:0
+    })).sort((a,b)=>(b.config.createdAt||0)-(a.config.createdAt||0));
+  }catch(e){
+    console.error('Error loading businesses:',e);
+    userBusinessesList=[];
+  }
+  hideLoading();
+  renderBusinessList();
+}
+
+function renderBusinessList(){
+  const grid=document.getElementById('biz-grid');
+  const countEl=document.getElementById('biz-count');
+  if(countEl)countEl.textContent=userBusinessesList.length+' עסקים';
+  const orderLink=location.origin+location.pathname;
+
+  let html=`<div class="biz-card-new" onclick="showCreateBusinessModal()">
+    <div class="biz-card-new-icon">+</div>
+    <div class="biz-card-new-text">עסק חדש</div>
+  </div>`;
+
+  for(const biz of userBusinessesList){
+    const c=biz.config;
+    const logo=c.logoImage?`<img src="${esc(c.logoImage)}" alt="">`:esc(c.logo||'📦');
+    const link=orderLink+'?biz='+biz.bizId;
+    html+=`<div class="biz-card">
+      <div class="biz-card-header">
+        <div class="biz-card-logo">${logo}</div>
+        <div>
+          <div class="biz-card-name">${esc(c.name||'ללא שם')}</div>
+          <div class="biz-card-id">${biz.bizId}</div>
+        </div>
+      </div>
+      <div class="biz-card-stats">
+        <div class="biz-card-stat"><strong>${biz.productCount}</strong>מוצרים</div>
+        <div class="biz-card-stat"><strong>${biz.categoryCount}</strong>קטגוריות</div>
+        <div class="biz-card-stat"><strong>${biz.orderCount}</strong>הזמנות</div>
+        <div class="biz-card-stat"><strong>${biz.memberCount}</strong>משתמשים</div>
+      </div>
+      <div class="biz-card-actions">
+        <button class="btn btn-primary" onclick="enterBusiness('${biz.bizId}')">ניהול</button>
+        <button class="btn btn-outline" onclick="window.open('${esc(link)}','_blank')">תצוגה מקדימה</button>
+        <button class="btn btn-outline" onclick="copyText('${esc(link)}')">העתק לינק</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteBusiness('${biz.bizId}','${esc(c.name||'')}')">מחק</button>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+async function enterBusiness(bizId){
+  showLoading('טוען עסק...');
+  currentBizId=bizId;
+  userRole='admin';
+  localStorage.setItem(LS_KEY_BIZ,bizId);
+  await loadBusinessData();
+  hideLoading();
+  // Show sidebar with back button
+  document.getElementById('sidebar').style.display='';
+  document.getElementById('nav-back-to-biz').classList.remove('hidden');
+  document.querySelector('.mobile-menu-btn').style.display='';
+  showSection('dashboard');
+  renderAdminUI();
+}
+
+function backToBusinessList(){
+  // Clean up current business listeners
+  if(db&&currentBizId){
+    db.ref('businesses/'+currentBizId+'/orders').off();
+  }
+  currentBizId=null;
+  currentBizData={config:{},categories:{},products:{},orders:{},members:{}};
+  // Hide sidebar, show business list
+  document.getElementById('sidebar').style.display='none';
+  document.querySelector('.mobile-menu-btn').style.display='none';
+  loadSuperAdminBusinesses();
+  showSection('businesses');
+}
+
+function showCreateBusinessModal(){
+  showModal(`
+    <div class="modal-header"><div class="modal-title">יצירת עסק חדש</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="form-group">
+      <label class="form-label form-required">שם העסק</label>
+      <input class="form-input" id="new-biz-name" placeholder="לדוגמה: מתוק כדבש">
+    </div>
+    <div class="form-group">
+      <label class="form-label">לוגו (אימוג'י)</label>
+      <input class="form-input" id="new-biz-logo" value="📦" style="max-width:80px;font-size:24px;text-align:center">
+    </div>
+    <div class="form-group">
+      <label class="form-label form-required">מספר וואטסאפ</label>
+      <input class="form-input ltr" id="new-biz-wa" placeholder="972542464448">
+      <div class="form-hint">כולל קידומת מדינה, ללא + או רווחים</div>
+    </div>
+    <button class="btn btn-primary btn-lg w-full mt-lg" onclick="createNewBusiness()">צור עסק</button>
+  `);
+}
+
+async function createNewBusiness(){
+  const name=document.getElementById('new-biz-name').value.trim();
+  const logo=document.getElementById('new-biz-logo').value.trim()||'📦';
+  const wa=document.getElementById('new-biz-wa').value.trim();
+  if(!name){toast('נא להזין שם עסק','error');return}
+  if(!wa||!/^\d{10,15}$/.test(wa)){toast('מספר וואטסאפ לא תקין','error');return}
+
+  showLoading('יוצר עסק...');
+  const bizId=uid();
+  const config={
+    name,logo,whatsappNumber:wa,
+    createdBy:currentUser.uid,
+    createdAt:Date.now(),
+    defaultProductImage:'',
+    orderFormTitle:'טופס הזמנה',
+    orderFormSubtitle:''
+  };
+  const memberData={
+    email:currentUser.email,
+    displayName:currentUser.displayName||'',
+    photoURL:currentUser.photoURL||'',
+    role:'admin',
+    addedAt:Date.now()
+  };
+  await db.ref('businesses/'+bizId+'/config').set(config);
+  await db.ref('businesses/'+bizId+'/members/'+currentUser.uid).set(memberData);
+  hideLoading();
+  closeModal();
+  toast('העסק "'+name+'" נוצר בהצלחה!');
+  await loadSuperAdminBusinesses();
+}
+
+function confirmDeleteBusiness(bizId,name){
+  showModal(`
+    <div class="modal-header"><div class="modal-title" style="color:var(--danger)">מחיקת עסק</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <p style="margin-bottom:16px">האם למחוק את העסק <strong>${esc(name)}</strong> וכל הנתונים שלו?</p>
+    <p style="margin-bottom:16px;color:var(--danger);font-size:14px">פעולה זו בלתי הפיכה! כל המוצרים, הקטגוריות, ההזמנות והמשתמשים יימחקו.</p>
+    <div class="form-group">
+      <label class="form-label">הקלידו את שם העסק לאישור:</label>
+      <input class="form-input" id="confirm-delete-name" placeholder="${esc(name)}">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="closeModal()" style="flex:1">ביטול</button>
+      <button class="btn btn-danger" onclick="deleteBusiness('${bizId}','${esc(name)}')" style="flex:1">מחק לצמיתות</button>
+    </div>
+  `);
+}
+
+async function deleteBusiness(bizId,name){
+  const confirmName=document.getElementById('confirm-delete-name').value.trim();
+  if(confirmName!==name){toast('שם העסק לא תואם','error');return}
+  showLoading('מוחק עסק...');
+  try{
+    // Delete business data
+    await db.ref('businesses/'+bizId).remove();
+    // Clean up userBusinesses references for all members
+    // (super admin cleanup - just remove this business)
+    closeModal();
+    toast('העסק נמחק');
+    await loadSuperAdminBusinesses();
+  }catch(e){
+    console.error('Delete error:',e);
+    toast('שגיאה במחיקה: '+e.message,'error');
+  }
+  hideLoading();
+}
+
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>toast('הלינק הועתק!')).catch(()=>toast('שגיאה בהעתקה','error'));
+}
+
 // ===== BUSINESS SETUP =====
 async function checkUserBusiness(){
   if(!currentUser)return;
-  // Check if user has a business
+
+  // Check if super admin
+  isSuperAdmin=await checkPlatformAdmin();
+  if(isSuperAdmin){
+    showScreen('admin');
+    // Hide sidebar for business list view
+    document.getElementById('sidebar').style.display='none';
+    document.querySelector('.mobile-menu-btn').style.display='none';
+    await loadSuperAdminBusinesses();
+    showSection('businesses');
+    return;
+  }
+
+  // Regular user: check for existing business
   const snap=await db.ref('userBusinesses/'+currentUser.uid).once('value');
   const data=snap.val();
   if(data&&data.businessId){
@@ -1773,8 +2051,16 @@ function renderCustomerView(){
     document.getElementById('cust-logo').innerHTML=`<img src="${esc(config.logoImage)}" style="max-height:64px;border-radius:12px" alt="${esc(config.name||'')}">`;
     document.getElementById('cust-logo').style.fontSize='inherit';
   }
-  // Page title
-  document.title=(config.name||'OrderFlow')+' - טופס הזמנה';
+  // Page title & OG meta tags (per-business branding for sharing)
+  const bizTitle=(config.name||'OrderFlow')+' - טופס הזמנה';
+  const bizDesc=config.orderFormSubtitle||'הזמינו מוצרים בקלות ושלחו הזמנה בוואטסאפ';
+  document.title=bizTitle;
+  const ogTitle=document.getElementById('og-title');if(ogTitle)ogTitle.content=bizTitle;
+  const ogDesc=document.getElementById('og-desc');if(ogDesc)ogDesc.content=bizDesc;
+  const ogUrl=document.getElementById('og-url');if(ogUrl)ogUrl.content=location.href;
+  const ogImg=document.getElementById('og-image');if(ogImg&&config.logoImage)ogImg.content=config.logoImage;
+  const twTitle=document.getElementById('tw-title');if(twTitle)twTitle.content=bizTitle;
+  const twDesc=document.getElementById('tw-desc');if(twDesc)twDesc.content=bizDesc;
 
   // Build sorted categories (enabled only)
   customerCategories=Object.entries(currentBizData.categories)
