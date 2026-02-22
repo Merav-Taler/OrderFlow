@@ -1055,9 +1055,15 @@ function toggleSidebar(){
 async function checkPlatformAdmin(){
   if(!currentUser||!db)return false;
   try{
+    console.log('Checking platformAdmin for UID:',currentUser.uid);
     const snap=await db.ref('platformAdmins/'+currentUser.uid).once('value');
-    const v=snap.val(); return v===true||v==='true';
-  }catch(e){return false}
+    const v=snap.val();
+    console.log('platformAdmin value:',v,'type:',typeof v);
+    return !!v;
+  }catch(e){
+    console.error('platformAdmin check failed:',e.message);
+    return false;
+  }
 }
 
 async function loadSuperAdminBusinesses(){
