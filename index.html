@@ -1056,7 +1056,7 @@ async function checkPlatformAdmin(){
   if(!currentUser||!db)return false;
   try{
     const snap=await db.ref('platformAdmins/'+currentUser.uid).once('value');
-    return snap.val()===true;
+    const v=snap.val(); return v===true||v==='true';
   }catch(e){return false}
 }
 
