@@ -488,6 +488,12 @@ textarea.form-input{resize:vertical;min-height:80px}
 .biz-card-new-icon{font-size:40px;width:64px;height:64px;border-radius:50%;background:var(--primary-glow);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:300}
 .biz-card-new-text{font-size:16px;font-weight:600;color:var(--text)}
 .nav-item-back{border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:8px;color:rgba(255,255,255,0.7)!important}
+.impersonate-bar{position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(135deg,#7B1FA2,#9C27B0);color:#fff;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;font-weight:500;box-shadow:0 2px 12px rgba(123,31,162,0.4)}
+.impersonate-bar button{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:4px 14px;font-size:13px;cursor:pointer;transition:all .2s}
+.impersonate-bar button:hover{background:rgba(255,255,255,0.35)}
+.impersonate-bar .impersonate-label{display:flex;align-items:center;gap:6px}
+body.impersonating .admin-main{margin-top:44px}
+body.impersonating .sidebar{padding-top:44px}
 .biz-list-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .biz-list-topbar .btn{font-size:13px}
 @media(max-width:600px){
@@ -530,6 +536,13 @@ textarea.form-input{resize:vertical;min-height:80px}
 
 <!-- ===== ADMIN LAYOUT ===== -->
 <div id="admin-layout" class="admin-layout hidden">
+  <div class="impersonate-bar hidden" id="impersonate-bar">
+    <div class="impersonate-label">
+      <span>&#x1F575;&#xFE0F;</span>
+      <span id="impersonate-text">מצב בדיקה</span>
+    </div>
+    <button onclick="stopImpersonate()">חזרה לסופר-אדמין</button>
+  </div>
   <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="תפריט ניווט">☰</button>
 
   <!-- Sidebar -->
@@ -542,6 +555,9 @@ textarea.form-input{resize:vertical;min-height:80px}
     <div class="sidebar-nav">
       <button class="nav-item nav-item-back hidden" id="nav-back-to-biz" onclick="backToBusinessList()">
         <span class="nav-icon">→</span> חזרה לרשימת עסקים
+      </button>
+      <button class="nav-item nav-item-back hidden" id="nav-impersonate" onclick="showImpersonateModal()">
+        <span class="nav-icon">&#x1F575;&#xFE0F;</span> בדיקה כתפקיד
       </button>
       <button class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
         <span class="nav-icon">📊</span> דשבורד
@@ -839,6 +855,7 @@ let currentBizData = { config: {}, categories: {}, products: {}, orders: {}, mem
 let userRole = null; // 'admin' | 'editor' | 'viewer'
 let isSuperAdmin = false;
 let userBusinessesList = []; // [{bizId, config, stats}]
+let impersonateRole = null; // null = not impersonating, 'admin'|'editor'|'viewer'
 let cart = {}; // { productId: quantity }
 let customerProducts = []; // flattened for customer view
 let customerCategories = []; // sorted for customer view
@@ -878,6 +895,12 @@ function isNewProduct(prod){
   return prod.createdAt&&(Date.now()-prod.createdAt)<weekMs;
 }
 function requireRole(minRole){
+  if(impersonateRole){
+    const roles=['viewer','editor','admin'];
+    const impIdx=roles.indexOf(impersonateRole);
+    const minIdx=roles.indexOf(minRole);
+    if(impIdx<minIdx){toast('אין הרשאה לתפקיד "'+({viewer:'צופה',editor:'עורך',admin:'מנהל'}[impersonateRole])+'" (מצב בדיקה)','error');return false}
+  }
   const roles=['viewer','editor','admin'];
   const userIdx=roles.indexOf(userRole);
   const minIdx=roles.indexOf(minRole);
@@ -993,6 +1016,9 @@ function logout(){
   userRole=null;
   isSuperAdmin=false;
   userBusinessesList=[];
+  impersonateRole=null;
+  document.getElementById('impersonate-bar').classList.add('hidden');
+  document.body.classList.remove('impersonating');
   showScreen('login');
 }
 
@@ -1102,15 +1128,18 @@ async function enterBusiness(bizId){
   localStorage.setItem(LS_KEY_BIZ,bizId);
   await loadBusinessData();
   hideLoading();
-  // Show sidebar with back button
+  // Show sidebar with back button and impersonate option
   document.getElementById('sidebar').style.display='';
   document.getElementById('nav-back-to-biz').classList.remove('hidden');
+  document.getElementById('nav-impersonate').classList.remove('hidden');
   document.querySelector('.mobile-menu-btn').style.display='';
   showSection('dashboard');
   renderAdminUI();
 }
 
 function backToBusinessList(){
+  // Clean up impersonation if active
+  if(impersonateRole){stopImpersonate()}
   // Clean up current business listeners
   if(db&&currentBizId){
     db.ref('businesses/'+currentBizId+'/orders').off();
@@ -1120,6 +1149,7 @@ function backToBusinessList(){
   // Hide sidebar, show business list
   document.getElementById('sidebar').style.display='none';
   document.querySelector('.mobile-menu-btn').style.display='none';
+  document.getElementById('nav-impersonate').classList.add('hidden');
   loadSuperAdminBusinesses();
   showSection('businesses');
 }
@@ -1213,6 +1243,54 @@ async function deleteBusiness(bizId,name){
 
 function copyText(text){
   navigator.clipboard.writeText(text).then(()=>toast('הלינק הועתק!')).catch(()=>toast('שגיאה בהעתקה','error'));
+}
+
+// ===== IMPERSONATE (SUPER ADMIN TESTING) =====
+function showImpersonateModal(){
+  showModal(`
+    <div class="modal-header"><div class="modal-title">בדיקה כתפקיד</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">בחרי תפקיד כדי לראות את המערכת בדיוק כפי שמשתמש עם תפקיד זה רואה אותה. פעולות כתיבה חסומות במצב בדיקה.</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary w-full" onclick="startImpersonate('admin')">מנהל עסק (Admin)</button>
+      <button class="btn btn-secondary w-full" onclick="startImpersonate('editor')">עורך (Editor)</button>
+      <button class="btn btn-outline w-full" onclick="startImpersonate('viewer')">צופה בלבד (Viewer)</button>
+    </div>
+  `);
+}
+
+function startImpersonate(role){
+  closeModal();
+  impersonateRole=role;
+  userRole=role;
+  const roleLabels={admin:'מנהל עסק',editor:'עורך',viewer:'צופה בלבד'};
+  document.getElementById('impersonate-text').textContent='מצב בדיקה: '+roleLabels[role]+' | '+(currentBizData.config.name||'');
+  document.getElementById('impersonate-bar').classList.remove('hidden');
+  document.body.classList.add('impersonating');
+  // Hide super-admin-only sidebar buttons
+  document.getElementById('nav-back-to-biz').classList.add('hidden');
+  document.getElementById('nav-impersonate').classList.add('hidden');
+  // Hide users & settings tabs for non-admin roles
+  document.querySelectorAll('.nav-item[data-section="users"],.nav-item[data-section="settings"]').forEach(el=>{
+    el.classList.toggle('hidden',role!=='admin');
+  });
+  toast('מצב בדיקה: '+roleLabels[role],'info');
+  renderAdminUI();
+}
+
+function stopImpersonate(){
+  impersonateRole=null;
+  userRole='admin';
+  document.getElementById('impersonate-bar').classList.add('hidden');
+  document.body.classList.remove('impersonating');
+  // Restore super-admin sidebar buttons
+  document.getElementById('nav-back-to-biz').classList.remove('hidden');
+  document.getElementById('nav-impersonate').classList.remove('hidden');
+  // Show all nav items
+  document.querySelectorAll('.nav-item[data-section="users"],.nav-item[data-section="settings"]').forEach(el=>{
+    el.classList.remove('hidden');
+  });
+  toast('חזרת למצב סופר-אדמין');
+  renderAdminUI();
 }
 
 // ===== BUSINESS SETUP =====
