@@ -660,18 +660,12 @@ body.impersonating .sidebar{padding-top:44px}
       </div>
       <div class="flex gap-sm items-center" style="margin-bottom:16px">
         <input type="date" class="form-input" id="orders-filter-date" onchange="renderOrders()" style="max-width:180px">
-        <select class="form-input" id="orders-filter-status" onchange="renderOrders()" style="max-width:150px">
-          <option value="">כל הסטטוסים</option>
-          <option value="new">חדשה</option>
-          <option value="confirmed">אושרה</option>
-          <option value="completed">הושלמה</option>
-        </select>
         <input class="form-input" id="orders-search" placeholder="חיפוש לקוח..." oninput="renderOrders()" style="max-width:200px" aria-label="חיפוש לקוח">
       </div>
       <div class="card">
         <div class="table-scroll-wrapper">
           <table class="data-table">
-            <thead><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+            <thead><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>פעולות</th></tr></thead>
             <tbody id="orders-body"></tbody>
           </table>
         </div>
@@ -739,6 +733,17 @@ body.impersonating .sidebar{padding-top:44px}
               <span class="img-upload-placeholder">+</span>
             </div>
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">דרישת פרטי לקוח בטופס ההזמנה</label>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+            <label class="toggle" style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" id="set-require-customer" checked>
+              <span class="toggle-slider"></span>
+              <span style="font-size:14px;color:var(--text-secondary)">חובה למלא פרטי לקוח (שם, טלפון, איש קשר)</span>
+            </label>
+          </div>
+          <div class="form-hint">אם כבוי - הלקוח יוכל לשלוח הזמנה ללא מילוי פרטים (הפרטים מזוהים דרך וואטסאפ)</div>
         </div>
         <div class="form-group">
           <label class="form-label">קישור לטופס ההזמנה</label>
@@ -1432,10 +1437,11 @@ function renderAdminUI(){
 }
 
 function updateOrderBadge(){
-  const newOrders=Object.values(currentBizData.orders).filter(o=>o.status==='new').length;
+  // Show total order count
+  const total=Object.keys(currentBizData.orders).length;
   const badge=document.getElementById('orders-badge');
-  if(newOrders>0){
-    badge.textContent=newOrders;
+  if(total>0){
+    badge.textContent=total;
     badge.classList.remove('hidden');
   }else{
     badge.classList.add('hidden');
@@ -1453,8 +1459,8 @@ function renderDashboard(){
   document.getElementById('dashboard-stats').innerHTML=`
     <div class="stat-card"><div class="stat-value">${orders.length}</div><div class="stat-label">סה"כ הזמנות</div></div>
     <div class="stat-card"><div class="stat-value" style="color:var(--secondary)">${todayOrders}</div><div class="stat-label">הזמנות היום</div></div>
-    <div class="stat-card"><div class="stat-value" style="color:var(--warning)">${newOrders}</div><div class="stat-label">ממתינות לטיפול</div></div>
     <div class="stat-card"><div class="stat-value" style="color:var(--success)">${products.filter(p=>p.enabled).length}/${products.length}</div><div class="stat-label">מוצרים פעילים</div></div>
+    <div class="stat-card"><div class="stat-value">${cats.length}</div><div class="stat-label">קטגוריות</div></div>
   `;
 
   // Recent orders
@@ -1464,10 +1470,9 @@ function renderDashboard(){
     return;
   }
   document.getElementById('recent-orders-list').innerHTML=`
-    <table class="data-table"><thead><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סטטוס</th></tr></thead>
+    <table class="data-table"><thead><tr><th>תאריך</th><th>שעה</th><th>לקוח</th><th>פריטים</th></tr></thead>
     <tbody>${recent.map(o=>`
-      <tr><td>${formatDate(o.timestamp)}</td><td>${esc(o.customerName)}</td><td>${o.items?.length||0}</td>
-      <td><span class="badge badge-${o.status}">${{new:'חדשה',confirmed:'אושרה',completed:'הושלמה'}[o.status]||o.status}</span></td></tr>
+      <tr><td>${formatDate(o.timestamp)}</td><td>${formatTime(o.timestamp)}</td><td>${esc(o.customerName||'—')}</td><td>${o.items?.length||0}</td></tr>
     `).join('')}</tbody></table>`;
 }
 
@@ -1817,33 +1822,17 @@ function renderOrders(){
       return d.toISOString().slice(0,10)===filterDate;
     });
   }
-  if(filterStatus)orders=orders.filter(o=>o.status===filterStatus);
   if(search)orders=orders.filter(o=>(o.customerName||'').toLowerCase().includes(search)||(o.contactName||'').toLowerCase().includes(search));
   orders.sort((a,b)=>b.timestamp-a.timestamp);
 
-  const statusLabels={new:'חדשה',confirmed:'אושרה',completed:'הושלמה'};
   document.getElementById('orders-body').innerHTML=orders.length?orders.map(o=>`
     <tr>
       <td>${formatDate(o.timestamp)}<br><small style="color:var(--text-light)">${formatTime(o.timestamp)}</small></td>
-      <td><strong>${esc(o.customerName)}</strong><br><small>${esc(o.contactName||'')}</small></td>
+      <td><strong>${esc(o.customerName||'—')}</strong>${o.contactName?`<br><small>${esc(o.contactName)}</small>`:''}</td>
       <td>${o.items?.length||0} פריטים</td>
-      <td>
-        <select class="form-input" style="width:auto;padding:4px 8px;font-size:13px" onchange="updateOrderStatus('${o.id}',this.value)">
-          <option value="new" ${o.status==='new'?'selected':''}>חדשה</option>
-          <option value="confirmed" ${o.status==='confirmed'?'selected':''}>אושרה</option>
-          <option value="completed" ${o.status==='completed'?'selected':''}>הושלמה</option>
-        </select>
-      </td>
-      <td><button class="btn btn-sm btn-outline" onclick="viewOrder('${o.id}')">👁️ צפה</button></td>
+      <td><button class="btn btn-sm btn-outline" onclick="viewOrder('${o.id}')">צפה</button></td>
     </tr>
-  `).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:30px">אין הזמנות</td></tr>';
-}
-
-async function updateOrderStatus(orderId,status){
-  await db.ref('businesses/'+currentBizId+'/orders/'+orderId+'/status').set(status);
-  currentBizData.orders[orderId].status=status;
-  updateOrderBadge();
-  toast('הסטטוס עודכן');
+  `).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:30px">אין הזמנות</td></tr>';
 }
 
 function viewOrder(orderId){
@@ -1965,6 +1954,9 @@ function renderSettings(){
   // Brand color
   document.getElementById('set-brand-color').value=c.brandColor||'#FF6B35';
 
+  // Require customer details
+  document.getElementById('set-require-customer').checked=c.requireCustomerDetails!==false;
+
   // QR Code
   generateQR(link);
 }
@@ -2002,7 +1994,8 @@ async function saveSettings(){
   if(wa&&!/^\d{10,15}$/.test(wa)){toast('מספר וואטסאפ לא תקין (רק ספרות)','error');return}
 
   const brandColor=document.getElementById('set-brand-color').value;
-  const updates={name,orderFormSubtitle:subtitle,whatsappNumber:wa,logo,brandColor};
+  const requireCustomerDetails=document.getElementById('set-require-customer').checked;
+  const updates={name,orderFormSubtitle:subtitle,whatsappNumber:wa,logo,brandColor,requireCustomerDetails};
   await db.ref('businesses/'+currentBizId+'/config').update(updates);
   Object.assign(currentBizData.config,updates);
   document.getElementById('sidebar-biz-name').textContent=name;
@@ -2339,13 +2332,19 @@ function renderSummary(){
   html+=`<div class="summary-total">סה"כ ${Object.keys(cart).length} מוצרים</div>`;
 
   // Customer form
+  const requireDetails=currentBizData.config.requireCustomerDetails!==false;
   const savedCustomer=JSON.parse(localStorage.getItem('orderFlow_customer_'+currentBizId)||'{}');
   html+=`
   <div class="summary-customer-form">
     <h3 style="margin-bottom:16px;font-size:16px">פרטי המזמין</h3>
+    ${requireDetails?`
     <div class="form-group"><label class="form-label form-required">שם העסק / מאפייה</label><input class="form-input" id="cust-name" value="${esc(savedCustomer.customerName||'')}" placeholder="לדוגמה: מאפיית השלום"></div>
     <div class="form-group"><label class="form-label form-required">איש קשר</label><input class="form-input" id="cust-contact" value="${esc(savedCustomer.contactName||'')}" placeholder="שם מלא"></div>
     <div class="form-group"><label class="form-label form-required">טלפון</label><input class="form-input ltr" id="cust-phone" value="${esc(savedCustomer.phone||'')}" placeholder="050-1234567" type="tel"></div>
+    `:`
+    <div class="form-group"><label class="form-label">שם (לא חובה)</label><input class="form-input" id="cust-name" value="${esc(savedCustomer.customerName||'')}" placeholder="שם העסק שלך"></div>
+    <input type="hidden" id="cust-contact" value=""><input type="hidden" id="cust-phone" value="">
+    `}
     <div class="form-group"><label class="form-label">הערות</label><textarea class="form-input" id="cust-note" placeholder="הערות להזמנה..." rows="2">${esc(savedCustomer.note||'')}</textarea></div>
   </div>`;
 
@@ -2392,9 +2391,12 @@ async function submitOrder(){
   const phone=(document.getElementById('cust-phone')?.value||'').trim();
   const note=(document.getElementById('cust-note')?.value||'').trim();
 
-  if(!customerName){toast('נא להזין שם עסק','error');return}
-  if(!contactName){toast('נא להזין שם איש קשר','error');return}
-  if(!phone){toast('נא להזין טלפון','error');return}
+  const requireDetails=currentBizData.config.requireCustomerDetails!==false;
+  if(requireDetails){
+    if(!customerName){toast('נא להזין שם עסק','error');return}
+    if(!contactName){toast('נא להזין שם איש קשר','error');return}
+    if(!phone){toast('נא להזין טלפון','error');return}
+  }
   if(Object.keys(cart).length===0){toast('העגלה ריקה','error');return}
 
   // Save customer details for next time
